@@ -29,6 +29,10 @@ io.on("connection", async (socket) => {
   socket.join(userId);
 
   socket.on("send-message", async ({ reciver_id, message }) => {
+    if (!reciver_id || !message) {
+      return socket.emit("error", "Reciver id and message is required");
+    }
+
     try {
       /**
        * Sending the message to the API before broadcasting
@@ -38,7 +42,7 @@ io.on("connection", async (socket) => {
        */
 
       const res = await sendMessage({
-        message: cleanedMessage,
+        message,
         reciver_id,
         token,
         key,
@@ -48,9 +52,11 @@ io.on("connection", async (socket) => {
        * Broadcasting the message if API response is 200 (SUCCESS)
        */
 
+      const reciver = `${reciver_id}`;
+
       if (res?.status === 200) {
-        if (!activeClients.includes(reciver_id)) return;
-        return socket.broadcast.to(reciver_id).emit("receive-message", {
+        if (!activeClients.includes(reciver)) return;
+        return socket.broadcast.to(reciver).emit("receive-message", {
           message,
           reciver_id,
           userId,
@@ -63,6 +69,8 @@ io.on("connection", async (socket) => {
 
   socket.on("disconnect", function () {
     socket.leave(userId);
+    const removeIndex = activeClients.map((item) => item).indexOf(userId);
+    activeClients.splice(removeIndex, 1);
   });
 });
 
