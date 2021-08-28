@@ -52,9 +52,8 @@ io.on("connection", async (socket) => {
        * Broadcasting the message if API response is 200 (SUCCESS)
        */
 
-      const reciver = `${reciver_id}`;
-
       if (res?.status === 200) {
+        const reciver = reciver_id.toString();
         if (!activeClients.includes(reciver)) return;
         return socket.broadcast.to(reciver).emit("receive-message", {
           message,
