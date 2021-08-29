@@ -1,5 +1,4 @@
 require("dotenv").config();
-const jwt = require("jsonwebtoken");
 const isAuthenticated = require("./lib/isAuthenticated");
 const { sendMessage } = require("./lib/api");
 const { instrument } = require("@socket.io/admin-ui");
@@ -19,31 +18,30 @@ io.use(async (socket, next) => {
 const activeClients = [];
 
 io.on("connection", async (socket) => {
-  const { token, key } = socket.handshake?.headers;
-  const decodedToken = jwt.verify(token, process.env?.JWT_SECRET);
-  const userId = decodedToken?.sub.toString();
-  activeClients.push(userId);
+  const userId = `${socket?.user?.sub}`;
+  const { token, key } = socket?.user?.auth;
 
   /* Every user will listen to thier channel so recive thier messages,
    or send messages to other users */
-  socket.join(userId);
 
-  socket.on("send-message", async ({ receiver_id, message }) => {
+  socket.join(userId);
+  activeClients.push(userId);
+
+  socket.on("message:send", async ({ receiver_id, message }) => {
     if (!receiver_id || !message) {
-      return socket.emit("error", "The reciver and message is required");
+      return socket.emit("error", "The receiver_id and message is required");
     }
 
     try {
       /**
        * Sending the message to the API before broadcasting
-       *
        * @route POST api/send/messagge
        * @access Private
        */
 
       const res = await sendMessage({
         message,
-        receiver_id,
+        receiver_id: +receiver_id,
         token,
         key,
       });
@@ -53,20 +51,23 @@ io.on("connection", async (socket) => {
        */
 
       if (res?.status === 200) {
-        const receiver = reciver_id.toString();
-        if (!activeClients.includes(receiver)) return;
-        return socket.broadcast.to(receiver).emit("receive-message", {
+        if (!activeClients.includes(receiver_id)) return;
+        return socket.broadcast.to(receiver_id).emit("message:receive", {
           message,
           receiver_id,
-          userId,
         });
       }
     } catch (error) {
+      console.log(error);
       socket.emit("error", "SOCKET_ERROR");
     }
   });
 
-  socket.on("disconnect", function () {
+  socket.on("message:delete", ({ receiver_id }) => {
+    socket.broadcast.to(receiver_id).emit("message:update");
+  });
+
+  socket.on("disconnect", () => {
     socket.leave(userId);
     const removeIndex = activeClients.map((item) => item).indexOf(userId);
     activeClients.splice(removeIndex, 1);
