@@ -28,9 +28,9 @@ io.on("connection", async (socket) => {
    or send messages to other users */
   socket.join(userId);
 
-  socket.on("send-message", async ({ reciver_id, message }) => {
-    if (!reciver_id || !message) {
-      return socket.emit("error", "Reciver id and message is required");
+  socket.on("send-message", async ({ receiver_id, message }) => {
+    if (!receiver_id || !message) {
+      return socket.emit("error", "The reciver and message is required");
     }
 
     try {
@@ -43,7 +43,7 @@ io.on("connection", async (socket) => {
 
       const res = await sendMessage({
         message,
-        reciver_id,
+        receiver_id,
         token,
         key,
       });
@@ -53,11 +53,11 @@ io.on("connection", async (socket) => {
        */
 
       if (res?.status === 200) {
-        const reciver = reciver_id.toString();
-        if (!activeClients.includes(reciver)) return;
-        return socket.broadcast.to(reciver).emit("receive-message", {
+        const receiver = reciver_id.toString();
+        if (!activeClients.includes(receiver)) return;
+        return socket.broadcast.to(receiver).emit("receive-message", {
           message,
-          reciver_id,
+          receiver_id,
           userId,
         });
       }
