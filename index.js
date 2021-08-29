@@ -58,7 +58,6 @@ io.on("connection", async (socket) => {
         });
       }
     } catch (error) {
-      console.log(error);
       socket.emit("error", "SOCKET_ERROR");
     }
   });
