@@ -1,14 +1,17 @@
 require("dotenv").config();
+const httpServer = require("http").createServer();
 const isAuthenticated = require("./lib/isAuthenticated");
 const { sendMessage } = require("./lib/api");
 const { instrument } = require("@socket.io/admin-ui");
 
-const io = require("socket.io")(process.env?.PORT || 5000, {
+const options = {
   cors: {
     origin: ["https://admin.socket.io"],
     credentials: true,
   },
-});
+};
+
+const io = require("socket.io")(httpServer, options);
 
 io.use(async (socket, next) => {
   await isAuthenticated(socket, next);
@@ -80,3 +83,7 @@ instrument(io, {
     password: process.env?.ADMIN_PASSWORD,
   },
 });
+
+const PORT = process.env.PORT || 5000;
+
+httpServer.listen(PORT, () => console.log(`Server is listening on ${PORT}`));
