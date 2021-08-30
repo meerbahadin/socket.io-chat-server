@@ -5,13 +5,22 @@ const { sendMessage } = require("./lib/api");
 const { instrument } = require("@socket.io/admin-ui");
 
 const options = {
-  cors: {
-    origin: ["https://admin.socket.io"],
-    credentials: true,
+  io: {
+    cors: {
+      origin: ["https://admin.socket.io"],
+      credentials: true,
+    },
+  },
+  instrument: {
+    auth: {
+      type: "basic",
+      username: process.env?.ADMIN_USERNAME,
+      password: process.env?.ADMIN_PASSWORD,
+    },
   },
 };
 
-const io = require("socket.io")(httpServer, options);
+const io = require("socket.io")(httpServer, options?.io);
 
 io.use(async (socket, next) => {
   await isAuthenticated(socket, next);
@@ -76,14 +85,8 @@ io.on("connection", async (socket) => {
   });
 });
 
-instrument(io, {
-  auth: {
-    type: "basic",
-    username: process.env?.ADMIN_USERNAME,
-    password: process.env?.ADMIN_PASSWORD,
-  },
-});
+instrument(io, options?.instrument);
 
 const PORT = process.env.PORT || 5000;
 
-httpServer.listen(PORT, () => console.log(`Server is listening on ${PORT}`));
+httpServer.listen(PORT, () => console.log(`SERVER IS RUNNING ON ${PORT}`));
