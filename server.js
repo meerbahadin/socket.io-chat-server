@@ -67,6 +67,7 @@ io.on("connection", async (socket) => {
         return socket.broadcast.to(receiver_id).emit("message:receive", {
           message,
           receiver_id,
+          sender_id: userId,
         });
       }
     } catch (error) {
