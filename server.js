@@ -7,7 +7,7 @@ const { instrument } = require("@socket.io/admin-ui");
 const options = {
   io: {
     cors: {
-      origin: ["https://admin.socket.io"],
+      origin: [process.env.ADMIN_URL],
       credentials: true,
     },
   },
@@ -89,5 +89,4 @@ io.on("connection", async (socket) => {
 instrument(io, options?.instrument);
 
 const PORT = process.env.PORT || 5000;
-
 httpServer.listen(PORT, () => console.log(`SERVER IS RUNNING ON ${PORT}`));
